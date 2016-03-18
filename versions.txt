@@ -1,0 +1,59 @@
+Grateful Dead Live at Frost Amphitheatre on 1982-10-10
+Looks Like Rain ->
+
+0:  Topics Audience, Charlie Miller, 24 bit, David Gans
+    Source Sennheiser 421 -> Cassette Master (Sony TC-D5M)
+    Lineage Cassette Master (Nakamichi DR-1) -> Sound Devices 744T (24bit/48k) ->Adobe Audition v3.0 -> Samplitude Professional v11.2.1 -> FLAC/24
+    Taped by David Gans
+    Transferred by Charlie Miller
+
+1:  Topics Live Concert, audience, Rango Keshavan, Jay Ashley
+    Source Sony ECM-220T Mics>Sony TC-D5 MAC>DAT>CDR>EAC
+    Lineage AUD>>CASS>>DAT>>CDA>>WAV(EAC)>>FLAC>>DAW(Bertha)>>FLAC
+    Taped by Rango Keshavan
+    Transferred by Jay Ashley
+
+2:  Topics Matrix, Soundboard, Hunter Seamons
+    Source Matrix by Hunter Seamons using Final Cut Pro (FLAC24 > AIFF > Final Cut > AIFF CD tracking via Audacity (w/dither) > FLAC16 via xACT)
+    Transferred by Hunter Seamons
+
+3:  Topics Soundboard, Charlie Miller, 24 bit
+    Source SBD -> Cassette Master (TDK MA-R90/Dolby B) -> Cassette (JVC KD-V6/XLII-S90/Dolby C)
+    Lineage Cassette (Nakamichi DR-1/Dolby C) -> Sound Devices 744T (24bit/48k) -> Adobe Audition v3.0 -> Samplitude Professional v11.1 -> FLAC/24
+    Transferred by Charlie Miller
+
+4:  Topics Audience, Richie Stankiewicz, 24 bit, Andrew F.
+    Source AUD: 2x Beyers M160's > Sony TC-D5, in the sweet spot.
+    Lineage MAC > Sony TC-KA3ES > Sound Devices USB Pre-2 > WAV 2496. Edits: WAV 2496 > Wavelab > CD-Wave (24bit output) > TLH > FLAC 2496 tagged. Concert recording & transfer by Richie Stankiewicz, edits by Andrew F. 05/2014.
+    Taped by Richie Stankiewicz
+    Transferred by Richie Stankiewicz and Andrew F
+
+5:  Topics Audience, anonymous, Jamie Poris, Brian Green, Evan K., LMPP
+    Source 3 Nak 700's (L & R Cardiods, Center Omni - 3 DB Low Pass filter) 25 foot back, Dead Center > -15 db pads > 3 mic mixer Preamp> Patchbay > Sony D5 > MAC (Dolby B )
+    Lineage MAC (Dolby B ) > CR-5A > HD-P2 > 24/96 Wave > wavelab 5 > plugins > r8brain Pro > 16/44.1 wave > cd wave > THL (lvl 8)
+    Taped by anonymous taper and Jamie Poris
+    Transferred by Brian Green and Evan K.
+
+6:  Topics Audience
+    Source Recorded, Transferred and Mastered by N. Hoey; 2 Nakamichi CM 300 > Sony TC D-5m (Dolby B)(TDK MA-90)(FOB) Nakamichi Dragon (Dolby B decoded) > Panasonic 3800 DAT (internal A/D conversion) > Soundforge (editing) > CD Architect > Mitsui disc > Toast 9 > Xact
+
+7:  Topics Audience, Bob Wagner, Charlie Miller
+    Source (FOB) Nakamichi 700 -> Cassette Master (Sony TC-D5M/Maxell XLII-S90/Dolby B)
+    Lineage Cassette Master (Nakamichi DR-1/Dolby B) -> Sound Devices 744T (24bit/48k) -> Adobe Audition v3.0 -> Samplitude Professional v11.1 -> FLAC/16
+    Taped by Bob Wagner
+    Transferred by Charlie Miller
+
+8:  Topics Audience, FOB, Charlie Miller, Rango Keshavan
+    Source (FOB) Sony ECM-220T -> Cassette Master (Sony TC-D5M/Fuji Metal Tape/Dolby B)
+    Lineage Cassette Master (Nakamichi DR-1/Dolby B) -> Sound Devices 744T (24bit/88.2k) -> Samplitude Professional v10.1 -> FLAC/16
+    Taped by Rango Keshavan
+    Transferred by Charlie Miller
+
+9: Topics Live concert
+    Source SBD:MCass>(?)DAT>CD>EAC>SHN
+    SBD:MCass>(?)DAT>CD>EAC>SHN; transfer by David Hollister; via Josh Ayers; known flaws: small cut in Crazy Fingers, momentary "blip" during Saint, cut in Drums (tape flip), momentary dropout during The Wheel, the very end of Sunshine Daydream is cut; note problem with d3 on etree, fixed version up by 12/3 via Darrin Sacks (old md5s shown here?)
+
+10: Topics Soundboard, Bill Tetzeli
+    Source MC>DAT>ZA2>CD>EAC>SHN
+    Taped by See info file
+    Transferred by Bill Tetzeli
