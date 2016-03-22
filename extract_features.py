@@ -1,15 +1,23 @@
 import os
 from shutil import move
 
-#features = ["vamp:qm-vamp-plugins:qm-barbeattracker", "vamp:qm-vamp-plugins:qm-mfcc:coefficients", "vamp:qm-vamp-plugins:qm-chromagram:chromagram"]
-features = ["vamp:match-vamp-plugin:match:a_b"]
-audiodir = 'audio2/'
+formats = {"jams": ".json", "rdf": ".n3"}
 
-for file in os.listdir(audiodir):
-    if ".wav" in file:
-        currentName = file.replace('.wav', '')
-        for feature in features:
-            #os.system("sonic-annotator -d " + feature + " " + audiodir+file + " -w rdf")
-            #move(audiodir + currentName + '.n3', 'features/' + currentName + '_' + feature.replace(':', '_') + '.n3')
-            os.system("sonic-annotator -d " + feature + " -m " + audiodir+"0.wav " + audiodir+file + " -w rdf")
-            move(audiodir + '0.n3', 'features/' + currentName + '_' + feature.replace(':', '_') + '.n3')
+def extract_simple_feature(audiodir, featuresdir, outformat, feature, file):
+    name = file.replace('.wav', '')
+    os.system("sonic-annotator -d " + feature + " " + audiodir+file + " -w " + outformat)
+    move(audiodir + name + formats[outformat], featuresdir + name + '_' + feature.replace(':', '_') + formats[outformat])
+
+def extract_multiplex_feature(audiodir, featuresdir, outformat, feature, file, reffile):
+    name = file.replace('.wav', '')
+    os.system("sonic-annotator -d " + feature + " -m " + audiodir+reffile+".wav " + audiodir+file + " -w " + outformat)
+    move(audiodir + reffile+formats[outformat], featuresdir + name + '_' + feature.replace(':', '_') + formats[outformat])
+
+def extract_features(audiodir, featuresdir, features, outformat, reference="00"):
+    for file in os.listdir(audiodir):
+        if ".wav" in file:
+            for feature in features:
+                if "match" in feature or "similarity" in feature:
+                    extract_multiplex_feature(audiodir, featuresdir, outformat, feature, file, reference)
+                else:
+                    extract_simple_feature(audiodir, featuresdir, outformat, feature, file)

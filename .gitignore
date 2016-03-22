@@ -18,7 +18,9 @@ out
 **/*.m4a
 **/*.mp3
 **/*.wav
+**/*.pyc
 
 audio
 features
 plots
+dymos

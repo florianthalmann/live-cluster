@@ -1,57 +1,16 @@
-import os, rdflib
+import os, json
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import MDS
 import pandas as pd
-
-class RdfReader():
-    
-    def getFeatureMatrix(self, folder, feature):
-        featureMatrix = []
-        for filename in os.listdir(folder):
-            if "n3" in filename:
-                objectname = filename.split("_")[0]
-                g = rdflib.Graph()
-                g.load(folder+filename, format="n3")
-                #if ("barbeattracker" in filename):
-                    #self.loadEvents(g)
-                if (feature in filename):
-                    featureMatrix.append(self.loadMatrix(g).mean(0))
-        return np.array(featureMatrix)
-    
-    def loadMatrix(self, graph):
-        result = graph.query(
-            """SELECT DISTINCT ?dim ?sig
-                WHERE {
-                    ?a af:dimensions ?dim .
-                    ?a af:value ?sig .
-                }""")
-        for row in result:
-            dim = int(row[0].split(" ")[0])
-            matrix = np.fromstring(row[1], sep=" ")
-            return matrix.reshape(-1, dim)
-    
-    def loadEvents(self, graph):
-        result = graph.query(
-            """SELECT DISTINCT ?dur
-               WHERE {
-                  ?a tl:at ?dur .
-               }""")
-        durations = []
-        for row in result:
-            durations.append(self.parseXSDDuration(row[0]))
-        durations.sort()
-        return durations
-    
-    def parseXSDDuration(self, duration):
-        return float(duration[2:-1])
+from feature_reader import JamsFeatureReader
 
 class ClusterPlotter():
     
     def plotDendrogram(self, featureMatrix, title, saveFile):
-        Z = linkage(features, 'ward')
+        Z = linkage(featureMatrix, 'ward')
         fig = plt.figure()
         plt.title(title)
         plt.xlabel('version')
@@ -61,23 +20,97 @@ class ClusterPlotter():
         plt.savefig(saveFile, facecolor='white', edgecolor='none')
         #plt.show()
     
-    def plotMDS(self, featureMatrix, title, saveFile):
-        dist = 1 - cosine_similarity(features)
-        mds = MDS(n_components=2, dissimilarity="precomputed", random_state=6)
-        results = mds.fit(dist)
-        coords = results.embedding_
-        
+    def plotMDSScatter(self, featureMatrix, title, saveFile):
+        coords = self.getMDS(featureMatrix)
         fig = plt.figure()
         plt.title(title)
         plt.scatter(coords[:, 0], coords[:, 1], marker = 'o')
         fig.patch.set_facecolor('white')
-        for label, x, y in zip(range(len(features)), coords[:, 0], coords[:, 1]):
+        for label, x, y in zip(range(len(featureMatrix)), coords[:, 0], coords[:, 1]):
             plt.annotate(label, (x, y))
         plt.savefig(saveFile, facecolor='white', edgecolor='none')
         #plt.show()
-
-
-features = RdfReader().getFeatureMatrix("features/", "mfcc")
-title = "MFCCs of Looks Like Rain on 1982-10-10"
-ClusterPlotter().plotDendrogram(features, title, "plots/mfcc_dendro.png")
-ClusterPlotter().plotMDS(features, title, "plots/mfcc_mds.png")
+    
+    def plotMDSLines(self, featureMatrices, title, saveFile):
+        lines = np.empty([featureMatrices.shape[1], featureMatrices.shape[0], 2])
+        for i in range(len(featureMatrices)):
+            coords = self.getMDS(featureMatrices[i])
+            for j in range(len(coords)):
+                lines[j][i] = coords[j]
+        fig = plt.figure()
+        plt.title(title)
+        for line in lines:
+            plt.plot(line[:, 0], line[:, 1])
+        fig.patch.set_facecolor('white')
+        #for label, x, y in zip(range(len(features)), coords[:, 0], coords[:, 1]):
+            #plt.annotate(label, (x, y))
+        plt.savefig(saveFile, facecolor='white', edgecolor='none')
+        #plt.show()
+    
+    def getFeatures(self, feature, featuresfolder, starts, ends):
+        reader = JamsFeatureReader(featuresfolder)
+        features = []
+        for i in range(len(starts)):
+            print starts[i], ends[i]
+            matrix = reader.getFeatureMatrixSegmentAvgAndVar(feature, starts[i], ends[i])
+            if matrix is not None and len(matrix) > 0:
+                features.append(matrix)
+        return np.array(features)
+    
+    def getMDS(self, featureMatrix, dist=None):
+        if dist is None:
+            dist = 1-cosine_similarity(featureMatrix)
+        mds = MDS(n_components=2, dissimilarity="precomputed", random_state=6)
+        results = mds.fit(dist)
+        return results.embedding_
+    
+    def createLinesWithScatters(self, feature, featuresfolder, outfolder, starts, ends):
+        features = self.getFeatures(feature, featuresfolder, starts, ends)
+        title = feature+" of Looks Like Rain on 1982-10-10"
+        self.plotMDSLines(features, title, outfolder+feature+"_mds_mul.png")
+        self.plotMDSScatter(reader.getFeatureMatrixSegment(feature, starts[0], ends[0]), title, outfolder+feature+"_mds_early.png")
+        self.plotMDSScatter(reader.getFeatureMatrixSegment(feature, starts[int(features.shape[0]/2)], ends[int(features.shape[0]/2)]), title, outfolder+feature+"_mds_medium.png")
+        self.plotMDSScatter(reader.getFeatureMatrixSegment(feature, starts[features.shape[0]-1], ends[features.shape[0]-1]), title, outfolder+feature+"_mds_late.png")
+    
+    def plotAverageMDS(self, feature, featuresfolder, outfile, starts, ends):
+        features = self.getFeatures(feature, featuresfolder, starts, ends)
+        labels = JamsFeatureReader(featuresfolder).getLabels()
+        dist = np.zeros([features.shape[1], features.shape[1]])
+        for matrix in features:
+            dist += 1 - cosine_similarity(matrix)
+        dist /= features.shape[0]
+        
+        title = feature+" of Looks Like Rain on 1982-10-10"
+        coords = self.getMDS(features, dist)
+        with open(outfile+".json", 'w') as distfile:
+            json.dump(coords.tolist(), distfile)
+            
+        fig = plt.figure(figsize=(16.0, 12.0))
+        plt.title(title)
+        plt.plot(coords[:, 0], coords[:, 1], marker = 'o', lw=0)
+        fig.patch.set_facecolor('white')
+        for label, x, y in zip(labels, coords[:, 0], coords[:, 1]):
+            plt.annotate(label, (x, y))
+        plt.savefig(outfile+".png", facecolor='white', edgecolor='none')
+    
+    def createStridePlot(self, pointcount, feature, outfolder):
+        starts = np.linspace(50, 100, num=pointcount, endpoint=False)
+        ends = starts+400
+        self.createLinesWithScatters(feature, outfolder, starts, ends)
+    
+    def createZoomPlot(self, pointcount, feature, outfolder):
+        starts = np.linspace(50, 250, num=pointcount, endpoint=False)
+        ends = np.full((pointcount), 250)
+        self.createLinesWithScatters(feature, outfolder, starts, ends)
+    
+    def createMultilevelAveragePlot(self, pointsperlevel, numlevels, feature, featurefolder, outfile):
+        starts = []
+        ends = []
+        levels = np.logspace(-1, 8, num=numlevels, base=2, endpoint=True)
+        for level in levels:
+            s = np.linspace(50, 250, num=pointsperlevel, endpoint=True)
+            starts.append(s)
+            ends.append(s+level)
+        starts = np.resize(starts, (pointsperlevel*numlevels))
+        ends = np.resize(ends, (pointsperlevel*numlevels))
+        self.plotAverageMDS(feature, featurefolder, outfile, starts, ends)
