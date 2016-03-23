@@ -64,6 +64,14 @@ class ClusterPlotter():
         results = mds.fit(dist)
         return results.embedding_
     
+    def getAvgMDS(self, feature, featuresfolder, starts, ends):
+        features = self.getFeatures(feature, featuresfolder, starts, ends)
+        dist = np.zeros([features.shape[1], features.shape[1]])
+        for matrix in features:
+            dist += 1 - cosine_similarity(matrix)
+        dist /= features.shape[0]
+        return self.getMDS(features, dist)
+    
     def createLinesWithScatters(self, feature, featuresfolder, outfolder, starts, ends):
         features = self.getFeatures(feature, featuresfolder, starts, ends)
         title = feature+" of Looks Like Rain on 1982-10-10"
@@ -73,15 +81,10 @@ class ClusterPlotter():
         self.plotMDSScatter(reader.getFeatureMatrixSegment(feature, starts[features.shape[0]-1], ends[features.shape[0]-1]), title, outfolder+feature+"_mds_late.png")
     
     def plotAverageMDS(self, feature, featuresfolder, outfile, starts, ends):
-        features = self.getFeatures(feature, featuresfolder, starts, ends)
-        labels = JamsFeatureReader(featuresfolder).getLabels()
-        dist = np.zeros([features.shape[1], features.shape[1]])
-        for matrix in features:
-            dist += 1 - cosine_similarity(matrix)
-        dist /= features.shape[0]
-        
         title = feature+" of Looks Like Rain on 1982-10-10"
-        coords = self.getMDS(features, dist)
+        labels = JamsFeatureReader(featuresfolder).getLabels()
+        
+        coords = self.getAvgMDS(feature, featuresfolder, starts, ends)
         with open(outfile+".json", 'w') as distfile:
             json.dump(coords.tolist(), distfile)
             
@@ -92,6 +95,9 @@ class ClusterPlotter():
         for label, x, y in zip(labels, coords[:, 0], coords[:, 1]):
             plt.annotate(label, (x, y))
         plt.savefig(outfile+".png", facecolor='white', edgecolor='none')
+    
+    def plotAvgMDSLines(self, features):
+        return
     
     def createStridePlot(self, pointcount, feature, outfolder):
         starts = np.linspace(50, 100, num=pointcount, endpoint=False)
@@ -114,3 +120,11 @@ class ClusterPlotter():
         starts = np.resize(starts, (pointsperlevel*numlevels))
         ends = np.resize(ends, (pointsperlevel*numlevels))
         self.plotAverageMDS(feature, featurefolder, outfile, starts, ends)
+    
+    def testLinearity(self):
+        start = 50
+        length = 400
+        points = 256
+        starts = np.linspace(start, start+length, num=points, endpoint=False)
+        ends = starts+(float(length)/points)
+        self.plotAverageMDS("chroma", "features/channels/", "plots/test/chroma_mds_"+str(points)+"_1", starts, ends)

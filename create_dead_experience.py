@@ -1,4 +1,5 @@
 from separate_channels import separate_channels
+from separate_channels import copy_features_of_separated_channels
 from extract_features import extract_features
 from tune_wavs import tune_wavs
 from cluster_features import ClusterPlotter
@@ -8,17 +9,18 @@ features = ["vamp:match-vamp-plugin:match:a_b", "vamp:qm-vamp-plugins:qm-mfcc:co
 #FIRST RUN ALL THIS
 
 #create alignment features and tune wavs
-extract_features("audio/original/", "features/original/", [features[0]], "jams", "00")
-tune_wavs("audio/original/", "audio/tuned/", "features/original/")
+#extract_features("audio/original/", "features/original/", [features[0]], "jams", "00")
+#tune_wavs("audio/original/", "audio/tuned/", "features/original/")
 
 #recreate alignment features for tuned wavs, separate channels and extract features for separate channels
-extract_features("audio/tuned/", "features/tuned/", [features[0]], "jams", "00")
-separate_channels("audio/tuned/", "audio/channels/")
-extract_features("audio/channels/", "features/channels/", features[1:], "jams")
+#extract_features("audio/tuned/", "features/tuned/", [features[0]], "jams", "00")
+#separate_channels("audio/tuned/", "audio/channels/")
+#copy_features_of_separated_channels("features/tuned/", "features/channels/")
+#extract_features("audio/channels/", "features/channels/", features[1:], "jams")
 
 #ClusterPlotter().createStridePlot(100, "chroma", "features/", "plots/stride(50,450)->(100,500)/")
-#ClusterPlotter().createMultilevelAveragePlot(1, 1, "chroma", "features_channels/", "plots/multilevel/chroma_mds_ch_avg")
-ClusterPlotter().createMultilevelAveragePlot(20, 20, "chroma", "features_tuned/", "plots/multilevel/chroma_mds_tu_avg20")
+#ClusterPlotter().createMultilevelAveragePlot(10, 5, "chroma", "features/channels/", "plots/multilevel/chroma_mds_10_5")
+ClusterPlotter().testLinearity()
 
 #create a dymo based on the plots
-create_dymo("plots/multilevel/chroma_mds_tu_avg20.json", "audio_trimmed/", "dymos/", 100)
+#create_dymo("plots/multilevel/chroma_mds_tu_avg20.json", "audio_trimmed/", "dymos/", 100)
