@@ -58,7 +58,7 @@ class JamsFeatureReader():
     def loadMatrix(self, featurejson):
         matrix = []
         for row in featurejson["annotations"][0]["data"]:
-            matrix.append([float(row["time"]), row["value"]])
+            matrix.append([float(row["time"]), row["value"][1:]])
         return matrix
     
     def loadABTimeline(self, featurejson):
