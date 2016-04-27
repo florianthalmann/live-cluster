@@ -10,12 +10,17 @@ class JamsFeatureReader():
     def getFeatureMatrixSegmentAvgAndVar(self, feature, from_time, to_time):
         times = self.getFeatureMatrix("match")
         featureMatrix = []
-        for t in times:
-            ft = self.getBTime(from_time, t)
-            tt = self.getBTime(to_time, t)
-            matrix = self.getMatrixSegment(feature, ft, tt)
+        for i in range(len(times)):
+            ft = self.getBTime(from_time, times[i])
+            tt = self.getBTime(to_time, times[i])
+            matrix = self.getMatrixSegment(feature, ft, tt, i)
             if len(matrix) > 0:
-                featureMatrix.append(np.concatenate([matrix.mean(0), matrix.var(0)]))
+                #NORMALIZE MEANS AND VARIANCES SEPARATELY!!!!!!!
+                means = matrix.mean(0)
+                means = means / means.max()
+                varis = matrix.var(0)
+                varis = varis / varis.max()
+                featureMatrix.append(np.concatenate([means, varis]))
         if len(featureMatrix) == len(self.getFeatureMatrix("match")):
             return np.array(featureMatrix)
     
@@ -33,13 +38,11 @@ class JamsFeatureReader():
                 return times[index][1]
             index += 1
     
-    def getMatrixSegment(self, feature, from_time, to_time):
-        matrix = []
-        for features in self.getFeatureMatrix(feature):
-            for row in features:
-                if from_time <= float(row[0]) and float(row[0]) < to_time:
-                    matrix.append(row[1])
-        return np.array(matrix)
+    def getMatrixSegment(self, feature, from_time, to_time, index):
+        matrix = self.getFeatureMatrix(feature)[index]
+        time_increment = matrix["time_increment"]
+        segment = matrix["data"][int(float(from_time)/time_increment):int(float(to_time)/time_increment)]
+        return np.array(segment)
     
     def getFeatureMatrix(self, feature):
         if feature not in self.features:
@@ -56,9 +59,15 @@ class JamsFeatureReader():
         return self.features[feature]
     
     def loadMatrix(self, featurejson):
-        matrix = []
-        for row in featurejson["annotations"][0]["data"]:
-            matrix.append([float(row["time"]), row["value"][1:]])
+        matrix = {}
+        annotation = featurejson["annotations"][0]
+        sampleRate = annotation["annotation_metadata"]["annotator"]["sample_rate"]
+        stepSize = annotation["annotation_metadata"]["annotator"]["step_size"]
+        matrix["time_increment"] = float(stepSize)/sampleRate
+        data = []
+        for row in annotation["data"]:
+            data.append(row["value"][2:])
+        matrix["data"] = np.array(data)
         return matrix
     
     def loadABTimeline(self, featurejson):

@@ -5,6 +5,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import MDS
 import pandas as pd
+import seaborn as sns
 from feature_reader import JamsFeatureReader
 
 class ClusterPlotter():
@@ -64,11 +65,33 @@ class ClusterPlotter():
         results = mds.fit(dist)
         return results.embedding_
     
-    def getAvgMDS(self, feature, featuresfolder, starts, ends):
+    def normalize(self, features):
+        for i in range(len(features)):
+            for j in range(len(features[i])):
+                features[i][j] = features[i][j] / features[i][j].max()
+        return features
+    
+    def plotDistanceMatrix(self, distanceMatrix, path):
+        f, ax = plt.subplots(figsize=(11, 9))
+        
+        # Generate a custom diverging colormap
+        cmap = sns.diverging_palette(220, 10, as_cmap=True)
+        
+        # Draw the heatmap with the mask and correct aspect ratio
+        sns.heatmap(distanceMatrix, cmap=cmap, vmax=distanceMatrix.max(),
+                    square=True, xticklabels=5, yticklabels=5,
+                    linewidths=.5, cbar_kws={"shrink": .5}, ax=ax)
+        
+        plt.savefig(path)
+    
+    def getAvgMDS(self, feature, featuresfolder, starts, ends, outfile):
         features = self.getFeatures(feature, featuresfolder, starts, ends)
+        #features = self.normalize(features)
+        self.plotDistanceMatrix(features[0], outfile+"_ex_features.png")
         dist = np.zeros([features.shape[1], features.shape[1]])
         for matrix in features:
             dist += 1 - cosine_similarity(matrix)
+        self.plotDistanceMatrix(dist, outfile+"_distances.png")
         dist /= features.shape[0]
         return self.getMDS(features, dist)
     
@@ -84,10 +107,11 @@ class ClusterPlotter():
         title = feature+" of Looks Like Rain on 1982-10-10"
         labels = JamsFeatureReader(featuresfolder).getLabels()
         
-        coords = self.getAvgMDS(feature, featuresfolder, starts, ends)
+        coords = self.getAvgMDS(feature, featuresfolder, starts, ends, outfile)
         with open(outfile+".json", 'w') as distfile:
             json.dump(coords.tolist(), distfile)
-            
+        
+        
         fig = plt.figure(figsize=(16.0, 12.0))
         plt.title(title)
         plt.plot(coords[:, 0], coords[:, 1], marker = 'o', lw=0)
@@ -109,12 +133,19 @@ class ClusterPlotter():
         ends = np.full((pointcount), 250)
         self.createLinesWithScatters(feature, outfolder, starts, ends)
     
+    def createSingleLevelPlot(self, numsegments, segmentlength, feature, featurefolder, outfile):
+        starts = []
+        ends = []
+        starts = np.linspace(50, 450, num=numsegments, endpoint=True)
+        ends = starts+segmentlength
+        self.plotAverageMDS(feature, featurefolder, outfile, starts, ends)
+    
     def createMultilevelAveragePlot(self, pointsperlevel, numlevels, feature, featurefolder, outfile):
         starts = []
         ends = []
         levels = np.logspace(-1, 8, num=numlevels, base=2, endpoint=True)
         for level in levels:
-            s = np.linspace(50, 250, num=pointsperlevel, endpoint=True)
+            s = np.linspace(50, 450, num=pointsperlevel, endpoint=True)
             starts.append(s)
             ends.append(s+level)
         starts = np.resize(starts, (pointsperlevel*numlevels))
