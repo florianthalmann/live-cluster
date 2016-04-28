@@ -16,13 +16,17 @@ class JamsFeatureReader():
             matrix = self.getMatrixSegment(feature, ft, tt, i)
             if len(matrix) > 0:
                 #NORMALIZE MEANS AND VARIANCES SEPARATELY!!!!!!!
-                means = matrix.mean(0)
-                means = means / means.max()
-                varis = matrix.var(0)
-                varis = varis / varis.max()
+                means = self.normalize(matrix.mean(0))
+                varis = self.normalize(matrix.var(0))
                 featureMatrix.append(np.concatenate([means, varis]))
         if len(featureMatrix) == len(self.getFeatureMatrix("match")):
             return np.array(featureMatrix)
+    
+    def normalize(self, array):
+        max = array.max()
+        if max != 0:
+            array /= max
+        return array
     
     def getLabels(self):
         labels = []

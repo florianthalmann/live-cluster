@@ -49,11 +49,12 @@ class ClusterPlotter():
         #plt.show()
     
     def getFeatures(self, feature, featuresfolder, starts, ends):
-        reader = JamsFeatureReader(featuresfolder)
+        if not hasattr(self,'reader') or self.reader.folder != featuresfolder:
+            self.reader = JamsFeatureReader(featuresfolder)
         features = []
         for i in range(len(starts)):
-            print starts[i], ends[i]
-            matrix = reader.getFeatureMatrixSegmentAvgAndVar(feature, starts[i], ends[i])
+            #print starts[i], ends[i]
+            matrix = self.reader.getFeatureMatrixSegmentAvgAndVar(feature, starts[i], ends[i])
             if matrix is not None and len(matrix) > 0:
                 features.append(matrix)
         return np.array(features)
@@ -71,29 +72,30 @@ class ClusterPlotter():
                 features[i][j] = features[i][j] / features[i][j].max()
         return features
     
-    def plotDistanceMatrix(self, distanceMatrix, path):
+    def plotMatrixHeat(self, matrix, path):
         f, ax = plt.subplots(figsize=(11, 9))
         
         # Generate a custom diverging colormap
         cmap = sns.diverging_palette(220, 10, as_cmap=True)
         
         # Draw the heatmap with the mask and correct aspect ratio
-        sns.heatmap(distanceMatrix, cmap=cmap, vmax=distanceMatrix.max(),
+        sns.heatmap(matrix, cmap=cmap, vmax=matrix.max(),
                     square=True, xticklabels=5, yticklabels=5,
                     linewidths=.5, cbar_kws={"shrink": .5}, ax=ax)
         
         plt.savefig(path)
     
-    def getAvgMDS(self, feature, featuresfolder, starts, ends, outfile):
+    def getAvgDistances(self, feature, featuresfolder, starts, ends, outfile=None):
         features = self.getFeatures(feature, featuresfolder, starts, ends)
-        #features = self.normalize(features)
-        self.plotDistanceMatrix(features[0], outfile+"_ex_features.png")
+        if outfile:
+            self.plotMatrixHeat(features[0], outfile+"_ex_features.png")
         dist = np.zeros([features.shape[1], features.shape[1]])
         for matrix in features:
             dist += 1 - cosine_similarity(matrix)
-        self.plotDistanceMatrix(dist, outfile+"_distances.png")
         dist /= features.shape[0]
-        return self.getMDS(features, dist)
+        if outfile:
+            self.plotMatrixHeat(dist, outfile+"_distances.png")
+        return dist
     
     def createLinesWithScatters(self, feature, featuresfolder, outfolder, starts, ends):
         features = self.getFeatures(feature, featuresfolder, starts, ends)
@@ -107,7 +109,8 @@ class ClusterPlotter():
         title = feature+" of Looks Like Rain on 1982-10-10"
         labels = JamsFeatureReader(featuresfolder).getLabels()
         
-        coords = self.getAvgMDS(feature, featuresfolder, starts, ends, outfile)
+        dists = self.getAvgDistances(feature, featuresfolder, starts, ends, outfile)
+        coords = self.getMDS(feature, dists)
         with open(outfile+".json", 'w') as distfile:
             json.dump(coords.tolist(), distfile)
         
@@ -151,6 +154,46 @@ class ClusterPlotter():
         starts = np.resize(starts, (pointsperlevel*numlevels))
         ends = np.resize(ends, (pointsperlevel*numlevels))
         self.plotAverageMDS(feature, featurefolder, outfile, starts, ends)
+    
+    def writeJson(self, list, path):
+        with open(path, 'w') as file:
+            json.dump(list, file)
+    
+    def printParameterAnalysis(self, feature, featuresfolder):
+        numsegments = np.logspace(0, 5, base=2, num=6, endpoint=True)
+        segmentlengths = np.logspace(-5, 5, base=2, num=11, endpoint=True)
+        shape = [len(numsegments), len(segmentlengths)]
+        means = np.empty(shape)
+        varis = np.empty(shape)
+        extrm = np.empty(shape)
+        fit = np.empty(shape)
+        for i in range(len(numsegments)):
+            for j in range(len(segmentlengths)):
+                starts = np.linspace(50, 450, num=numsegments[i], endpoint=True)
+                ends = starts+segmentlengths[j]
+                distances = self.getAvgDistances(feature, featuresfolder, starts, ends)
+                means[i][j] = distances.mean()
+                varis[i][j] = distances.var()
+                extrm[i][j] = np.minimum(distances.max()-distances, distances).mean()
+                fit[i][j] = means[i][j]/extrm[i][j]
+                print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j], "avg dist:", means[i][j], "var dist:", varis[i][j], "extremes:", extrm[i][j], "fit:", fit[i][j]
+        self.plotMatrixHeat(np.array(means), "eval3/means.png")
+        self.plotMatrixHeat(np.array(varis), "eval3/vars.png")
+        self.plotMatrixHeat(np.array(extrm), "eval3/extrms.png")
+        self.plotMatrixHeat(np.array(fit), "eval3/fitness.png")
+        self.writeJson(means.tolist(), "eval3/means.json")
+        self.writeJson(varis.tolist(), "eval3/vars.json")
+        self.writeJson(extrm.tolist(), "eval3/extrms.json")
+        self.writeJson(fit.tolist(), "eval3/fitness.json")
+    
+    def plotMeasures(self, path, names, dim, outfile):
+        fig = plt.figure()
+        for name in names:
+            with open(path+name+'.json') as file:
+                matrix = json.load(file)
+                plt.plot(np.array(matrix).mean(dim), label=name)
+        fig.patch.set_facecolor('white')
+        plt.savefig(path+outfile, facecolor='white', edgecolor='none')
     
     def testLinearity(self):
         start = 50
