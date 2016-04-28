@@ -159,32 +159,50 @@ class ClusterPlotter():
         with open(path, 'w') as file:
             json.dump(list, file)
     
-    def printParameterAnalysis(self, feature, featuresfolder):
-        numsegments = np.logspace(0, 5, base=2, num=6, endpoint=True)
-        segmentlengths = np.logspace(-5, 5, base=2, num=11, endpoint=True)
-        shape = [len(numsegments), len(segmentlengths)]
-        means = np.empty(shape)
-        varis = np.empty(shape)
-        extrm = np.empty(shape)
-        fit = np.empty(shape)
+    def saveSegmentAnalysis(self, feature, featuresfolder, outfolder):
+        numsegments = np.logspace(0, 9, base=2, num=10, endpoint=True)
+        segmentlengths = np.logspace(-5, 7, base=2, num=13, endpoint=True)
+        dist = {"numsegments":numsegments.tolist(),"segmentlengths":segmentlengths.tolist(),"distances":[]}
         for i in range(len(numsegments)):
+            current_dist = []
             for j in range(len(segmentlengths)):
                 starts = np.linspace(50, 450, num=numsegments[i], endpoint=True)
                 ends = starts+segmentlengths[j]
                 distances = self.getAvgDistances(feature, featuresfolder, starts, ends)
+                current_dist.append(distances.tolist())
+                print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j]
+            dist["distances"].append(current_dist)
+        self.writeJson(dist, outfolder+"dist.json")
+    
+    def saveParameterAnalysis(self, distfile, outfolder):
+        with open(distfile) as file:
+            distjson = json.load(file)
+        numsegments = distjson["numsegments"]
+        segmentlengths = distjson["segmentlengths"]
+        totalchannels = len(distjson["distances"][0][0])
+        shape = [len(numsegments), len(segmentlengths)]
+        means = np.empty(shape)
+        varis = np.empty(shape)
+        close = np.empty(shape)
+        fit = np.empty(shape)
+        for i in range(len(numsegments)):
+            current_dist = []
+            for j in range(len(segmentlengths)):
+                distances = np.array(distjson["distances"][i][j])
                 means[i][j] = distances.mean()
                 varis[i][j] = distances.var()
-                extrm[i][j] = np.minimum(distances.max()-distances, distances).mean()
-                fit[i][j] = means[i][j]/extrm[i][j]
-                print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j], "avg dist:", means[i][j], "var dist:", varis[i][j], "extremes:", extrm[i][j], "fit:", fit[i][j]
-        self.plotMatrixHeat(np.array(means), "eval3/means.png")
-        self.plotMatrixHeat(np.array(varis), "eval3/vars.png")
-        self.plotMatrixHeat(np.array(extrm), "eval3/extrms.png")
-        self.plotMatrixHeat(np.array(fit), "eval3/fitness.png")
-        self.writeJson(means.tolist(), "eval3/means.json")
-        self.writeJson(varis.tolist(), "eval3/vars.json")
-        self.writeJson(extrm.tolist(), "eval3/extrms.json")
-        self.writeJson(fit.tolist(), "eval3/fitness.json")
+                #extrm[i][j] = np.minimum(distances.max()-distances, distances).mean()
+                close[i][j] = (distances < means[i][j]/3).sum()-totalchannels
+                fit[i][j] = means[i][j]*close[i][j]
+                #print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j], "avg dist:", means[i][j], "var dist:", varis[i][j], "closest:", close[i][j], "fit:", fit[i][j]
+        self.plotMatrixHeat(np.array(means), outfolder+"means.png")
+        self.plotMatrixHeat(np.array(varis), outfolder+"vars.png")
+        self.plotMatrixHeat(np.array(close), outfolder+"close.png")
+        self.plotMatrixHeat(np.array(fit), outfolder+"fitness.png")
+        self.writeJson(means.tolist(), outfolder+"means.json")
+        self.writeJson(varis.tolist(), outfolder+"vars.json")
+        self.writeJson(close.tolist(), outfolder+"close.json")
+        self.writeJson(fit.tolist(), outfolder+"fitness.json")
     
     def plotMeasures(self, path, names, dim, outfile):
         fig = plt.figure()

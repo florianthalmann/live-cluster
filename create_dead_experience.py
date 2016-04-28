@@ -22,9 +22,13 @@ features = ["vamp:match-vamp-plugin:match:a_b", "vamp:qm-vamp-plugins:qm-mfcc:co
 
 #ClusterPlotter().createStridePlot(100, "chroma", "features/", "plots/stride(50,450)->(100,500)/")
 #ClusterPlotter().createMultilevelAveragePlot(50, 1, "mfcc", "features/channels/", "plots/test3/mfcc-5_mds_50_1")
-ClusterPlotter().createSingleLevelPlot(16, 1, "mfcc", "features/channels/", "eval3/mfcc_mds_16*1sec")
-#ClusterPlotter().printParameterAnalysis("mfcc", "features/channels/")
-#ClusterPlotter().plotMeasures('eval3/', ['means','vars','extrms','fitness'], 1, 'measures1.png')
+#ClusterPlotter().createSingleLevelPlot(256, 0.0625, "mfcc", "features/channels/", "results/eval4/mfcc_mds_256*0.0625sec")
+#ClusterPlotter().saveSegmentAnalysis("mfcc", "features/channels/", "results/eval4/")
+ClusterPlotter().saveParameterAnalysis("results/eval4/dist.json", "results/eval4/")
+ClusterPlotter().plotMeasures('results/eval4/', ['close'], 0, 'close0.png')
+ClusterPlotter().plotMeasures('results/eval4/', ['close'], 1, 'close1.png')
+ClusterPlotter().plotMeasures('results/eval4/', ['fitness'], 0, 'fitness0.png')
+ClusterPlotter().plotMeasures('results/eval4/', ['fitness'], 1, 'fitness1.png')
 
 #create a dymo based on the plots
 #create_dymo("plots/multilevel/chroma_mds_tu_avg20.json", "audio_trimmed/", "dymos/", 100)
