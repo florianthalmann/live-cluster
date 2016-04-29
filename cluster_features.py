@@ -2,6 +2,7 @@ import os, json
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.stats import skew, entropy
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import MDS
 import pandas as pd
@@ -174,6 +175,14 @@ class ClusterPlotter():
             dist["distances"].append(current_dist)
         self.writeJson(dist, outfolder+"dist.json")
     
+    def getMutualDistances(self, distanceMatrix):
+        distances = []
+        for i in range(len(distanceMatrix)):
+            for j in range(len(distanceMatrix[0])):
+                if i < j:
+                    distances.append(distanceMatrix[i][j])
+        return np.array(distances)
+    
     def saveParameterAnalysis(self, distfile, outfolder):
         with open(distfile) as file:
             distjson = json.load(file)
@@ -182,25 +191,27 @@ class ClusterPlotter():
         totalchannels = len(distjson["distances"][0][0])
         shape = [len(numsegments), len(segmentlengths)]
         means = np.empty(shape)
-        varis = np.empty(shape)
+        stds = np.empty(shape)
         close = np.empty(shape)
         fit = np.empty(shape)
         for i in range(len(numsegments)):
             current_dist = []
             for j in range(len(segmentlengths)):
-                distances = np.array(distjson["distances"][i][j])
+                distances = self.getMutualDistances(distjson["distances"][i][j])
                 means[i][j] = distances.mean()
-                varis[i][j] = distances.var()
+                stds[i][j] = distances.std()
                 #extrm[i][j] = np.minimum(distances.max()-distances, distances).mean()
-                close[i][j] = (distances < means[i][j]/3).sum()-totalchannels
-                fit[i][j] = means[i][j]*close[i][j]
+                close[i][j] = (distances < means[i][j]/10).sum()
+                h=np.histogram(distances, bins=100)
+                p=h[0].astype(float)/h[0].sum() #probability of bins
+                fit[i][j] = (1-skew(distances))*entropy(p) #1-skew(distances.flatten())*close[i][j]#pow(means[i][j],3)/pow(stds[i][j],3)#(distances < means[i][j]/10)*distances()#stds[i][j]/means[i][j]
                 #print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j], "avg dist:", means[i][j], "var dist:", varis[i][j], "closest:", close[i][j], "fit:", fit[i][j]
         self.plotMatrixHeat(np.array(means), outfolder+"means.png")
-        self.plotMatrixHeat(np.array(varis), outfolder+"vars.png")
+        self.plotMatrixHeat(np.array(stds), outfolder+"stds.png")
         self.plotMatrixHeat(np.array(close), outfolder+"close.png")
         self.plotMatrixHeat(np.array(fit), outfolder+"fitness.png")
         self.writeJson(means.tolist(), outfolder+"means.json")
-        self.writeJson(varis.tolist(), outfolder+"vars.json")
+        self.writeJson(stds.tolist(), outfolder+"stds.json")
         self.writeJson(close.tolist(), outfolder+"close.json")
         self.writeJson(fit.tolist(), outfolder+"fitness.json")
     
@@ -212,6 +223,45 @@ class ClusterPlotter():
                 plt.plot(np.array(matrix).mean(dim), label=name)
         fig.patch.set_facecolor('white')
         plt.savefig(path+outfile, facecolor='white', edgecolor='none')
+    
+    def plotAllMeasures(self, measures, outfolder):
+        for measure in measures:
+            self.plotMeasures(outfolder, [measure], 0, measure+'0.png')
+            self.plotMeasures(outfolder, [measure], 1, measure+'1.png')
+    
+    def plotDistanceDistributions(self, distfile, outfolder):
+        with open(distfile) as file:
+            distjson = json.load(file)
+        numsegments = distjson["numsegments"]
+        segmentlengths = distjson["segmentlengths"]
+        for i in range(len(numsegments)):
+            fig = plt.figure(figsize=(16.0, 12.0))
+            plt.title("Distances for "+str(numsegments[i])+" segments")
+            for j in range(len(segmentlengths)):
+                distances = self.getMutualDistances(distjson["distances"][i][j])
+                sns.distplot(distances, hist=False, label=str(segmentlengths[j]));
+            plt.savefig(outfolder+"distdist_num_"+str(numsegments[i])+".png")
+        for j in range(len(segmentlengths)):
+            fig = plt.figure(figsize=(16.0, 12.0))
+            plt.title("Distances for segment length: "+str(segmentlengths[j])+")")
+            for i in range(len(numsegments)):
+                distances = self.getMutualDistances(distjson["distances"][i][j])
+                sns.distplot(distances, hist=False, label=str(numsegments[i]));
+            plt.savefig(outfolder+"distdist_len_"+str(segmentlengths[j])+".png")
+    
+    def plotDistanceDistributions2(self, distfile, outfolder):
+        with open(distfile) as file:
+            distjson = json.load(file)
+        numsegments = distjson["numsegments"]
+        segmentlengths = distjson["segmentlengths"]
+        for i in range(len(numsegments)):
+            for j in range(len(segmentlengths)):
+                if numsegments[i] in [1, 16, 256] and segmentlengths[j] in [0.03125, 1, 32]:
+                    fig = plt.figure(figsize=(16.0, 12.0))
+                    plt.title("Distances for "+str(numsegments[i])+" segments of "+ str(segmentlengths[j])+"sec length")
+                    distances = self.getMutualDistances(distjson["distances"][i][j])
+                    sns.distplot(distances, hist=False, label=str(segmentlengths[j]));
+                    plt.savefig(outfolder+"distdist_"+str(numsegments[i])+"_"+str(segmentlengths[j])+".png")
     
     def testLinearity(self):
         start = 50
