@@ -107,14 +107,16 @@ class ClusterPlotter():
         self.plotMDSScatter(reader.getFeatureMatrixSegment(feature, starts[features.shape[0]-1], ends[features.shape[0]-1]), title, outfolder+feature+"_mds_late.png")
     
     def plotAverageMDS(self, feature, featuresfolder, outfile, starts, ends):
-        title = feature+" of Looks Like Rain on 1982-10-10"
+        #title = feature+" of Looks Like Rain on 1982-10-10"
         labels = JamsFeatureReader(featuresfolder).getLabels()
         
         dists = self.getAvgDistances(feature, featuresfolder, starts, ends, outfile)
-        coords = self.getMDS(feature, dists)
-        with open(outfile+".json", 'w') as distfile:
-            json.dump(coords.tolist(), distfile)
+        with open(outfile+"_dists.json", 'w') as distfile:
+            json.dump(dists.tolist(), distfile)
         
+        coords = self.getMDS(feature, dists)
+        with open(outfile+"_mds.json", 'w') as distfile:
+            json.dump(coords.tolist(), distfile)
         
         fig = plt.figure(figsize=(16.0, 12.0))
         plt.title(title)
@@ -123,9 +125,8 @@ class ClusterPlotter():
         for label, x, y in zip(labels, coords[:, 0], coords[:, 1]):
             plt.annotate(label, (x, y))
         plt.savefig(outfile+".png", facecolor='white', edgecolor='none')
-    
-    def plotAvgMDSLines(self, features):
-        return
+        
+        return dists
     
     def createStridePlot(self, pointcount, feature, outfolder):
         starts = np.linspace(50, 100, num=pointcount, endpoint=False)
@@ -174,6 +175,22 @@ class ClusterPlotter():
                 print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j]
             dist["distances"].append(current_dist)
         self.writeJson(dist, outfolder+"dist.json")
+    
+    def saveSegmentAnalysisAndPlots(self, feature, featuresfolder, outfolder):
+        numsegments = np.logspace(0, 9, base=2, num=10, endpoint=True)
+        segmentlengths = np.logspace(-5, 7, base=2, num=13, endpoint=True)
+        dist = {"numsegments":numsegments.tolist(),"segmentlengths":segmentlengths.tolist(),"distances":[]}
+        for i in range(len(numsegments)):
+            current_dist = []
+            for j in range(len(segmentlengths)):
+                starts = np.linspace(50, 450, num=numsegments[i], endpoint=True)
+                ends = starts+segmentlengths[j]
+                outfile = outfolder+feature+"_mds_"+str(numsegments[i])+"*"+str(segmentlengths[j])+"sec"
+                distances = self.plotAverageMDS(feature, featuresfolder, outfile, starts, ends)
+                current_dist.append(distances.tolist())
+                print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j]
+            dist["distances"].append(current_dist)
+        self.writeJson(dist, outfolder+feature+"_dist.json")
     
     def getMutualDistances(self, distanceMatrix):
         distances = []
