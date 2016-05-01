@@ -2,7 +2,7 @@ import os, json
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, linkage
-from scipy.stats import skew, entropy
+from scipy.stats import skew, entropy, kurtosis
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import MDS
 import pandas as pd
@@ -189,31 +189,30 @@ class ClusterPlotter():
         numsegments = distjson["numsegments"]
         segmentlengths = distjson["segmentlengths"]
         totalchannels = len(distjson["distances"][0][0])
+        param_names = ["means","stds","skew","kurtosis","entropy","extremeness","closeness","fitness"]
+        parameters = {}
         shape = [len(numsegments), len(segmentlengths)]
-        means = np.empty(shape)
-        stds = np.empty(shape)
-        close = np.empty(shape)
-        fit = np.empty(shape)
+        for name in param_names:
+            parameters[name] = np.empty(shape)
         for i in range(len(numsegments)):
             current_dist = []
             for j in range(len(segmentlengths)):
                 distances = self.getMutualDistances(distjson["distances"][i][j])
-                means[i][j] = distances.mean()
-                stds[i][j] = distances.std()
-                #extrm[i][j] = np.minimum(distances.max()-distances, distances).mean()
-                close[i][j] = (distances < means[i][j]/10).sum()
+                parameters["means"][i][j] = distances.mean()
+                parameters["stds"][i][j] = distances.std()
+                parameters["skew"][i][j] = skew(distances)
+                parameters["kurtosis"][i][j] = kurtosis(distances)
                 h=np.histogram(distances, bins=100)
                 p=h[0].astype(float)/h[0].sum() #probability of bins
-                fit[i][j] = (1-skew(distances))*entropy(p) #1-skew(distances.flatten())*close[i][j]#pow(means[i][j],3)/pow(stds[i][j],3)#(distances < means[i][j]/10)*distances()#stds[i][j]/means[i][j]
+                parameters["entropy"][i][j] = entropy(p)
+                parameters["extremeness"][i][j] = np.minimum(distances.max()-distances, distances).mean()
+                parameters["closeness"][i][j] = parameters["means"][i][j]-parameters["stds"][i][j]#(distances < means[i][j]/10).sum()
+                parameters["fitness"][i][j] = (1-parameters["skew"][i][j])/(parameters["kurtosis"][i][j]+3)/parameters["closeness"][i][j]*parameters["extremeness"][i][j] #*entropy(p) #1-skew(distances.flatten())*close[i][j]#pow(means[i][j],3)/pow(stds[i][j],3)#(distances < means[i][j]/10)*distances()#stds[i][j]/means[i][j]
                 #print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j], "avg dist:", means[i][j], "var dist:", varis[i][j], "closest:", close[i][j], "fit:", fit[i][j]
-        self.plotMatrixHeat(np.array(means), outfolder+"means.png")
-        self.plotMatrixHeat(np.array(stds), outfolder+"stds.png")
-        self.plotMatrixHeat(np.array(close), outfolder+"close.png")
-        self.plotMatrixHeat(np.array(fit), outfolder+"fitness.png")
-        self.writeJson(means.tolist(), outfolder+"means.json")
-        self.writeJson(stds.tolist(), outfolder+"stds.json")
-        self.writeJson(close.tolist(), outfolder+"close.json")
-        self.writeJson(fit.tolist(), outfolder+"fitness.json")
+        for name in param_names:
+            self.plotMatrixHeat(np.array(parameters[name]), outfolder+name+".png")
+            self.writeJson(parameters[name].tolist(), outfolder+name+".json")
+            self.plotAllMeasures([name], outfolder)
     
     def plotMeasures(self, path, names, dim, outfile):
         fig = plt.figure()

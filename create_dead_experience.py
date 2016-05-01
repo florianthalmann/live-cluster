@@ -29,7 +29,6 @@ ClusterPlotter().saveParameterAnalysis("results/eval4/dist.json", "results/eval4
 
 #ClusterPlotter().plotDistanceDistributions("results/eval4/dist.json", "results/eval4/dist_distribs/")
 #ClusterPlotter().plotDistanceDistributions2("results/eval4/dist.json", "results/eval5/*distribs2/")
-ClusterPlotter().plotAllMeasures(['close','fitness'], 'results/eval4/tril/')
 
 #create a dymo based on the plots
 #create_dymo("plots/multilevel/chroma_mds_tu_avg20.json", "audio_trimmed/", "dymos/", 100)
