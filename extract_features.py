@@ -10,12 +10,14 @@ def extract_simple_feature(audiodir, featuresdir, outformat, feature, file):
 
 def extract_multiplex_feature(audiodir, featuresdir, outformat, feature, file, reffile):
     name = file.replace('.wav', '')
-    os.system("sonic-annotator -d " + feature + " -m " + audiodir+reffile+".wav " + audiodir+file + " -w " + outformat)
-    move(audiodir + reffile+formats[outformat], featuresdir + name + '_' + feature.replace(':', '_') + formats[outformat])
+    os.system("sonic-annotator -d " + feature + " -m " + audiodir+reffile+" " + audiodir+file + " -w " + outformat)
+    move(audiodir + reffile.replace('.wav','')+formats[outformat], featuresdir + name + '_' + feature.replace(':', '_') + formats[outformat])
 
-def extract_features(audiodir, featuresdir, features, outformat, reference="00"):
+def extract_features(audiodir, featuresdir, features, outformat, reference=None):
     for file in os.listdir(audiodir):
-        if ".wav" in file:
+        if file.endswith(".wav"):
+            if not reference:
+                reference = file
             for feature in features:
                 if "match" in feature or "similarity" in feature:
                     extract_multiplex_feature(audiodir, featuresdir, outformat, feature, file, reference)

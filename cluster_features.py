@@ -119,7 +119,7 @@ class ClusterPlotter():
             json.dump(coords.tolist(), distfile)
         
         fig = plt.figure(figsize=(16.0, 12.0))
-        plt.title(title)
+        #plt.title(title)
         plt.plot(coords[:, 0], coords[:, 1], marker = 'o', lw=0)
         fig.patch.set_facecolor('white')
         for label, x, y in zip(labels, coords[:, 0], coords[:, 1]):
@@ -177,8 +177,8 @@ class ClusterPlotter():
         self.writeJson(dist, outfolder+"dist.json")
     
     def saveSegmentAnalysisAndPlots(self, feature, featuresfolder, outfolder):
-        numsegments = np.logspace(0, 9, base=2, num=10, endpoint=True)
-        segmentlengths = np.logspace(-5, 7, base=2, num=13, endpoint=True)
+        numsegments = np.logspace(0, 1, base=2, num=2, endpoint=True)
+        segmentlengths = np.logspace(-5, 0, base=2, num=5, endpoint=True)
         dist = {"numsegments":numsegments.tolist(),"segmentlengths":segmentlengths.tolist(),"distances":[]}
         for i in range(len(numsegments)):
             current_dist = []
