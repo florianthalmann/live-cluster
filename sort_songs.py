@@ -8,7 +8,8 @@ def simplify_title(title):
     title = title.replace('>','')
     title = title.replace('"','')
     title = title.replace("in'","ing")
-    title = title.replace("st.","saint")
+    title = title.replace("saint","st")
+    title = title.replace("st.","st")
     return title
 
 def get_files_by_songs_from_xml(folder):
@@ -30,12 +31,13 @@ def get_files_by_songs_from_xml(folder):
 def move_files_to_song_folders(infolder, rec_name, outfolder):
     files_by_songs = get_files_by_songs_from_xml(infolder)
     for songname in files_by_songs:
-        #make song folder if it doesn't exist yet
-        songfolder = outfolder+songname
-        if not os.path.exists(songfolder):
-            os.makedirs(songfolder)
-        #print infolder+files_by_songs[songname], songfolder+'/'+rec_name+'.wav'
-        copy(infolder+files_by_songs[songname], songfolder+'/'+rec_name+'.wav')
+        if os.path.isfile(infolder+files_by_songs[songname]):
+            #make song folder if it doesn't exist yet
+            songfolder = outfolder+songname
+            if not os.path.exists(songfolder):
+                os.makedirs(songfolder)
+            #print infolder+files_by_songs[songname], songfolder+'/'+rec_name+'.wav'
+            copy(infolder+files_by_songs[songname], songfolder+'/'+rec_name+'.wav')
 
 def sort_songs(infolder, outfolder):
     for date_folder in os.listdir(infolder):
