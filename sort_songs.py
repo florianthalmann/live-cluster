@@ -6,6 +6,7 @@ def simplify_title(title):
     title = title.lower()
     #characters to remove
     title = title.replace('>','')
+    title = title.replace('/','')
     title = title.replace('-','')
     title = title.replace(',','')
     title = title.replace('.','')
@@ -18,12 +19,13 @@ def simplify_title(title):
     #words to standardize
     title = title.replace("in'","ing")
     title = title.replace("playin ","playing ")
+    title = title.replace("lovin ","loving ")
     title = title.replace("saint","st")
     title = title.replace("st.","st")
     title = title.replace("&","and")
     title = title.replace("don't","dont")
     title = title.replace("it's","its")
-    title = title.replace("'ve","have")
+    title = title.replace("'ve"," have")
     title = title.replace("john's","johns")
     #typos
     title = title.replace("john'","johns")
@@ -36,6 +38,9 @@ def simplify_title(title):
     title = re.sub(r'\([^)]*\)', '', title)
     #remove all spaces
     title = title.replace(' ','')
+    #idiosyncracies
+    title = title.replace("stevenjam","ststephen")
+    title = title.replace("playingreprise","playinginthebandreprise")
     return title
 
 def get_files_by_songs_from_xml(folder):

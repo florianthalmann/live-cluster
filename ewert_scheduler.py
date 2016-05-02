@@ -60,8 +60,8 @@ class EwertScheduler():
             if os.path.isdir(basefolder+subfolder+file):
                 self.recursively_analyze_the_shit_out_of_this(basefolder, subfolder+file+"/", outfolder)
 
-#audio_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/download/WAV_44-16/'
-#analysis_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/'
-audio_folder = 'audio/'
-analysis_folder = 'analysis/'
+audio_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/audio/original/'
+analysis_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/'
+#audio_folder = 'audio/'
+#analysis_folder = 'analysis/'
 EwertScheduler().recursively_analyze_the_shit_out_of_this(audio_folder, '', analysis_folder)
