@@ -10,19 +10,29 @@ def simplify_title(title):
     title = title.replace(',','')
     title = title.replace('.','')
     title = title.replace('"','')
+    title = title.replace('*','')
+    title = title.replace('#','')
     #words to remove
-    title = title.replace('setbreak','')
+    title = title.replace('set break','')
+    title = title.replace('e:','')
     #words to standardize
-    title = title.replace("playin'","playing")
+    title = title.replace("in'","ing")
     title = title.replace("playin ","playing ")
     title = title.replace("saint","st")
     title = title.replace("st.","st")
+    title = title.replace("&","and")
+    title = title.replace("don't","dont")
+    title = title.replace("it's","its")
+    title = title.replace("'ve","have")
+    title = title.replace("john's","johns")
     #typos
+    title = title.replace("john'","johns")
     title = title.replace("throwning","throwing")
     title = title.replace("new minglewood","minglewood")
     title = title.replace("i know your rider","i know you rider")
     title = title.replace("feels like a stranger","feel like a stranger")
-    #remove all parentheses
+    title = title.replace("it must have been the roses","must have been the roses")
+    #remove all parentheses with their content
     title = re.sub(r'\([^)]*\)', '', title)
     #remove all spaces
     title = title.replace(' ','')
