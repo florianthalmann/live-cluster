@@ -4,12 +4,28 @@ import xml.etree.ElementTree as etree
 
 def simplify_title(title):
     title = title.lower()
-    title = title.replace(' ','')
+    #characters to remove
     title = title.replace('>','')
+    title = title.replace('-','')
+    title = title.replace(',','')
+    title = title.replace('.','')
     title = title.replace('"','')
-    title = title.replace("in'","ing")
+    #words to remove
+    title = title.replace('setbreak','')
+    #words to standardize
+    title = title.replace("playin'","playing")
+    title = title.replace("playin ","playing ")
     title = title.replace("saint","st")
     title = title.replace("st.","st")
+    #typos
+    title = title.replace("throwning","throwing")
+    title = title.replace("new minglewood","minglewood")
+    title = title.replace("i know your rider","i know you rider")
+    title = title.replace("feels like a stranger","feel like a stranger")
+    #remove all parentheses
+    title = re.sub(r'\([^)]*\)', '', title)
+    #remove all spaces
+    title = title.replace(' ','')
     return title
 
 def get_files_by_songs_from_xml(folder):
@@ -41,7 +57,6 @@ def move_files_to_song_folders(infolder, rec_name, outfolder):
 
 def sort_songs(infolder, outfolder):
     for date_folder in os.listdir(infolder):
-        print infolder+date_folder
         if os.path.isdir(infolder+date_folder):
             for rec_folder in os.listdir(infolder+date_folder):
                 print infolder+date_folder+'/'+rec_folder
