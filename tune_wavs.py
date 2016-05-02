@@ -8,7 +8,7 @@ from feature_reader import JamsFeatureReader
 def get_first_time_value(time, times):
     index = 0
     while True:
-        if times[index]:
+        if index < len(times):
             if times[index][0] >= time:
                 return times[index][1]
             index += 1
