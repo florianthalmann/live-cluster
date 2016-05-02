@@ -13,16 +13,18 @@ def get_first_time_value(time, times):
         index += 1
 
 def resample_wavs(folder):
-    files = os.listdir(folder)[1:]
     for file in [f for f in os.listdir(folder) if ".wav" in f]:
         print "resampling " + folder+file
         os.system("sox " + folder+file + " -r 44100 " + folder+"r"+file)
         move(folder+"r"+file, folder+file)
 
 def adjust_wavs_rate(infolder, outfolder, featurefolder):
-    from_sec = 50
-    to_sec = 350
     files = [f for f in os.listdir(infolder) if ".wav" in f]
+    #get the right
+    rate, data = wf.read(infolder+files[0])
+    length = int(float(len(data))/rate)
+    from_sec = 20
+    to_sec = length-20
     times = JamsFeatureReader(featurefolder).getFeatureMatrix("match")
     
     for index in range(len(files)):
@@ -39,5 +41,6 @@ def adjust_wavs_rate(infolder, outfolder, featurefolder):
         wf.write(outfolder+current_file, rate, data)
 
 def tune_wavs(infolder, outfolder, featurefolder):
-    adjust_wavs_rate(infolder, outfolder, featurefolder)
-    resample_wavs(outfolder)
+    if len(os.listdir(outfolder)) != len(os.listdir(infolder)):
+        adjust_wavs_rate(infolder, outfolder, featurefolder)
+        resample_wavs(outfolder)
