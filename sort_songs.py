@@ -1,4 +1,4 @@
-import os
+import os, re
 from shutil import copy
 import xml.etree.ElementTree as etree
 
