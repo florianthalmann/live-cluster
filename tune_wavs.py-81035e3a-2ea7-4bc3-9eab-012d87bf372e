@@ -24,7 +24,7 @@ def resample_wavs(folder):
 def adjust_wavs_rate(infolder, outfolder, featurefolder):
     files = [f for f in os.listdir(infolder) if ".wav" in f]
     times = JamsFeatureReader(featurefolder).getFeatureMatrix("match")
-    #get the right window
+    #get the right
     rate, data = wf.read(infolder+files[0])
     length = int(float(len(data))/rate)
     from_sec = 20
@@ -45,6 +45,5 @@ def adjust_wavs_rate(infolder, outfolder, featurefolder):
             wf.write(outfolder+current_file, rate, data)
 
 def tune_wavs(infolder, outfolder, featurefolder):
-    if len(os.listdir(outfolder)) != len(os.listdir(infolder)):
-        adjust_wavs_rate(infolder, outfolder, featurefolder)
-        resample_wavs(outfolder)
+    adjust_wavs_rate(infolder, outfolder, featurefolder)
+    resample_wavs(outfolder)
