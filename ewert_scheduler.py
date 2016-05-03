@@ -49,7 +49,8 @@ class EwertScheduler():
         if any(f.endswith('.wav') for f in files):
             #analyze current folder
             self.create_current_folders(basefolder, subfolder, outfolder)
-            self.align_and_tune()
+            if len(os.listdir(self.channels_audio_folder)) <= 1:
+                self.align_and_tune()
             self.realign_and_separate_and_analyze()
             #self.create_clustering_and_plots()
         
