@@ -1,9 +1,10 @@
-from separate_channels import separate_channels
-from separate_channels import copy_features_of_separated_channels
-from extract_features import extract_features
-from tune_wavs import tune_wavs
-from normalize_audio import normalize_audio
-from cluster_features import ClusterPlotter
+#from separate_channels import separate_channels
+#from separate_channels import copy_features_of_separated_channels
+#from extract_features import extract_features
+#from tune_wavs import tune_wavs
+#from normalize_audio import normalize_audio
+#from cluster_features import ClusterPlotter
+from create_dymo import create_dymo
 
 features = ["vamp:match-vamp-plugin:match:a_b", "vamp:qm-vamp-plugins:qm-mfcc:coefficients", "vamp:qm-vamp-plugins:qm-chromagram:chromagram"]
 
@@ -25,14 +26,14 @@ features = ["vamp:match-vamp-plugin:match:a_b", "vamp:qm-vamp-plugins:qm-mfcc:co
 #ClusterPlotter().createSingleLevelPlot(256, 32, "mfcc", "features/channels/", "results/eval5/mfcc_mds_256*32sec")
 
 #ClusterPlotter().saveSegmentAnalysis("mfcc", "features/channels/", "results/eval4/")
-ClusterPlotter().saveParameterAnalysis("results/eval4/dist.json", "results/eval4/tril/")
+#ClusterPlotter().saveParameterAnalysis("results/eval4/dist.json", "results/eval6/2/")
 
 #ClusterPlotter().plotDistanceDistributions("results/eval4/dist.json", "results/eval4/dist_distribs/")
-#ClusterPlotter().plotDistanceDistributions2("results/eval4/dist.json", "results/eval5/*distribs2/")
+#ClusterPlotter().plotDistanceDistributions2("results/eval4/dist.json", "results/eval6/distribs/")
 
 #create a dymo based on the plots
-#create_dymo("plots/multilevel/chroma_mds_tu_avg20.json", "audio_trimmed/", "dymos/", 100)
-
+#create_dymo("plots/multilevel/chroma_mds_tu_avg20.json", "audio/trimmed/", "dymos/", 100)
+create_dymo("plots/test5/chroma_mds_avg_50*1sec.json", "audio/trimmed3/", "dymos/", 100)
 
 
 #ClusterPlotter().testLinearity()

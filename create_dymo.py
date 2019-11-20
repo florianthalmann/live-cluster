@@ -1,17 +1,61 @@
 import os, json
 
 def create_dymo(clusterpath, audiofolder, outfolder, factor):
-    dymojson = {"@id":"dymo0","@type":"Dymo","ct":"parallel","parts":[],"Amplitude":{"value":0.1,"type":"Parameter"}}
+    parts = []
+    renderingjson = {
+        "@context": "https://tiny.cc/dymo-context",
+        "@type": "Rendering",
+        "dymo": {
+            "@id":"dymo0",
+            "@type":"Dymo",
+            "cdt": "Conjunction",
+            "parts":{"@list": parts},
+            "parameters": {
+                "@type": "Amplitude",
+                "value": {
+                "@type": "xsd:float",
+                    "@value": "0.1"
+                }
+            }
+        }
+    }
     audiofiles = [elem for elem in os.listdir(audiofolder) if ".wav" in elem]
     
     for i in range(len(audiofiles)):
         with open(clusterpath) as clusterfile:
             clusterjson = json.load(clusterfile)
         
-        create_subdymo(dymojson, "dymo"+str(i), audiofiles[i], clusterjson[i], factor)
+        create_subdymo(parts, "dymo"+str(i+1), audiofiles[i], clusterjson[i], factor)
         
-    with open(outfolder+"dymo.json", 'w') as dymofile:
-        json.dump(dymojson, dymofile)
+    with open(outfolder+"save.json", 'w') as dymofile:
+        json.dump(renderingjson, dymofile)
 
-def create_subdymo(dymojson, name, audiopath, location, factor):
-    dymojson["parts"].append({"@id":name,"@type":"Dymo","parts":[],"source":"audio_trimmed/"+audiopath,"Amplitude":{"value":0.1,"type":"Parameter"},"Pan":{"value":factor*location[0],"type":"Parameter"},"Distance":{"value":factor*location[1],"type":"Parameter"}})
+def create_subdymo(parts, name, audiopath, location, factor):
+    parts.append({
+        "@id":name,
+        "@type":"Dymo",
+        "source":"audio_trimmed/"+audiopath,
+        "parameters": [
+            {
+                "@type": "Amplitude",
+                "value": {
+                "@type": "xsd:float",
+                    "@value": "0.1"
+                }
+            },
+            {
+                "@type": "Pan",
+                "value": {
+                "@type": "xsd:float",
+                    "@value": str(factor*location[0])
+                }
+            },
+            {
+                "@type": "Distance",
+                "value": {
+                "@type": "xsd:float",
+                    "@value": str(factor*location[1])
+                }
+            }
+        ]
+    })
