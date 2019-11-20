@@ -49,10 +49,10 @@ class EwertScheduler():
         if any(f.endswith('.wav') for f in files):
             #analyze current folder
             self.create_current_folders(basefolder, subfolder, outfolder)
-            if len(os.listdir(self.channels_audio_folder)) <= 1:
-                self.align_and_tune()
-            self.realign_and_separate_and_analyze()
-            #self.create_clustering_and_plots()
+            #if len(os.listdir(self.channels_audio_folder)) <= 1:
+                #self.align_and_tune()
+            #self.realign_and_separate_and_analyze()
+            self.create_clustering_and_plots()
         
         #recursively go through all subfolders
         for file in files:
@@ -60,8 +60,8 @@ class EwertScheduler():
                 print "\n WORKING ON ", basefolder+subfolder+file, "\n"
                 self.recursively_analyze_the_shit_out_of_this(basefolder, subfolder+file+"/", outfolder)
 
-audio_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/audio/original/'
-analysis_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/'
-#audio_folder = 'audio/'
-#analysis_folder = 'analysis/'
+#audio_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/audio/original/'
+#analysis_folder = '/Volumes/gspeed1/thomasw/grateful_dead/AES_141/analysis/'
+audio_folder = 'audio/original/'
+analysis_folder = 'analysis/'
 EwertScheduler().recursively_analyze_the_shit_out_of_this(audio_folder, '', analysis_folder)

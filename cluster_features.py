@@ -80,22 +80,25 @@ class ClusterPlotter():
         cmap = sns.diverging_palette(220, 10, as_cmap=True)
         
         # Draw the heatmap with the mask and correct aspect ratio
-        sns.heatmap(matrix, cmap=cmap, vmax=matrix.max(),
-                    square=True, xticklabels=5, yticklabels=5,
+        g = sns.heatmap(matrix, cmap=cmap, vmax=matrix.max(),
+                    square=True, xticklabels=5, yticklabels=5,#xticklabels=[-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7], yticklabels=[0,1,2,3,4,5,6,7,8,9],
                     linewidths=.5, cbar_kws={"shrink": .5}, ax=ax)
-        
+        #g.set(xlabel="segment duration "+r"$2^\sigma$", ylabel="number of segments "+r"$2^\rho$")
         plt.savefig(path)
     
     def getAvgDistances(self, feature, featuresfolder, starts, ends, outfile=None):
         features = self.getFeatures(feature, featuresfolder, starts, ends)
         if outfile:
-            self.plotMatrixHeat(features[0], outfile+"_ex_features.png")
+            current_palette = sns.color_palette()
+            sns.palplot(sns.color_palette("Blues"))
+            self.plotMatrixHeat(features[0], outfile+"_ex_features.pdf")
+            sns.palplot(current_palette)
         dist = np.zeros([features.shape[1], features.shape[1]])
         for matrix in features:
             dist += 1 - cosine_similarity(matrix)
         dist /= features.shape[0]
         if outfile:
-            self.plotMatrixHeat(dist, outfile+"_distances.png")
+            self.plotMatrixHeat(dist, outfile+"_distances.pdf")
         return dist
     
     def createLinesWithScatters(self, feature, featuresfolder, outfolder, starts, ends):
@@ -118,13 +121,13 @@ class ClusterPlotter():
         with open(outfile+"_mds.json", 'w') as distfile:
             json.dump(coords.tolist(), distfile)
         
-        fig = plt.figure(figsize=(16.0, 12.0))
+        fig = plt.figure(figsize=(8.0, 6.0))
         #plt.title(title)
         plt.plot(coords[:, 0], coords[:, 1], marker = 'o', lw=0)
         fig.patch.set_facecolor('white')
         for label, x, y in zip(labels, coords[:, 0], coords[:, 1]):
             plt.annotate(label, (x, y))
-        plt.savefig(outfile+".png", facecolor='white', edgecolor='none')
+        plt.savefig(outfile+".pdf", facecolor='white', edgecolor='none')
         
         return dists
     
@@ -177,18 +180,24 @@ class ClusterPlotter():
         self.writeJson(dist, outfolder+"dist.json")
     
     def saveSegmentAnalysisAndPlots(self, feature, featuresfolder, outfolder):
-        numsegments = np.logspace(0, 1, base=2, num=2, endpoint=True)
-        segmentlengths = np.logspace(-5, 0, base=2, num=5, endpoint=True)
+        refduration = int(JamsFeatureReader(featuresfolder).getFeatureMatrix("match")[0][-1][0])
+        print refduration
+        #numsegments = np.logspace(0, 7, base=2, num=8, endpoint=True)
+        #segmentlengths = np.logspace(-4, 5, base=2, num=10, endpoint=True)
+        numsegments = np.array([128])
+        segmentlengths = np.array([0.5])
         dist = {"numsegments":numsegments.tolist(),"segmentlengths":segmentlengths.tolist(),"distances":[]}
         for i in range(len(numsegments)):
             current_dist = []
             for j in range(len(segmentlengths)):
-                starts = np.linspace(50, 450, num=numsegments[i], endpoint=True)
+                print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j]
+                starts = np.linspace(20, refduration-20, num=numsegments[i], endpoint=True)
                 ends = starts+segmentlengths[j]
                 outfile = outfolder+feature+"_mds_"+str(numsegments[i])+"*"+str(segmentlengths[j])+"sec"
                 distances = self.plotAverageMDS(feature, featuresfolder, outfile, starts, ends)
-                current_dist.append(distances.tolist())
-                print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j]
+                if len(distances) > 0:
+                    current_dist.append(distances.tolist())
+                #plt.close('all')
             dist["distances"].append(current_dist)
         self.writeJson(dist, outfolder+feature+"_dist.json")
     
@@ -223,27 +232,51 @@ class ClusterPlotter():
                 p=h[0].astype(float)/h[0].sum() #probability of bins
                 parameters["entropy"][i][j] = entropy(p)
                 parameters["extremeness"][i][j] = np.minimum(distances.max()-distances, distances).mean()
-                parameters["closeness"][i][j] = parameters["means"][i][j]-parameters["stds"][i][j]#(distances < means[i][j]/10).sum()
-                parameters["fitness"][i][j] = (1-parameters["skew"][i][j])/(parameters["kurtosis"][i][j]+3)/parameters["closeness"][i][j]*parameters["extremeness"][i][j] #*entropy(p) #1-skew(distances.flatten())*close[i][j]#pow(means[i][j],3)/pow(stds[i][j],3)#(distances < means[i][j]/10)*distances()#stds[i][j]/means[i][j]
+                #parameters["closeness"][i][j] = np.sort(distances.flatten())[:distances.size/3].mean()
+                parameters["closeness"][i][j] = np.percentile(distances,5)
+                #print np.sort(distances.flatten())[:distances.size/10]
+                #(distances < parameters["means"][i][j]/10).sum()#parameters["means"][i][j]-parameters["stds"][i][j]#(distances < means[i][j]/10).sum()
+        parameters["skew"] = self.normalize(parameters["skew"])
+        parameters["kurtosis"] = self.normalize(parameters["kurtosis"])
+        #parameters["closeness"] = self.normalize(parameters["closeness"])+0.001
+        for i in range(len(numsegments)):
+            for j in range(len(segmentlengths)):
+                parameters["fitness"][i][j] = (1-parameters["skew"][i][j])*parameters["kurtosis"][i][j]/parameters["closeness"][i][j]
+        #(1-parameters["skew"][i][j])/(parameters["kurtosis"][i][j]+3)/parameters["closeness"][i][j]*parameters["extremeness"][i][j] #*entropy(p) #1-skew(distances.flatten())*close[i][j]#pow(means[i][j],3)/pow(stds[i][j],3)#(distances < means[i][j]/10)*distances()#stds[i][j]/means[i][j]
                 #print "segments:", numsegments[i], "lengths (sec):", segmentlengths[j], "avg dist:", means[i][j], "var dist:", varis[i][j], "closest:", close[i][j], "fit:", fit[i][j]
         for name in param_names:
-            self.plotMatrixHeat(np.array(parameters[name]), outfolder+name+".png")
+            self.plotMatrixHeat(np.array(parameters[name]), outfolder+name+".pdf")
             self.writeJson(parameters[name].tolist(), outfolder+name+".json")
             self.plotAllMeasures([name], outfolder)
     
-    def plotMeasures(self, path, names, dim, outfile):
+    def normalize(self, matrix):
+        min = matrix.min()
+        matrix -= min
+        max = matrix.max()
+        if max != 0:
+            matrix /= max
+        return matrix
+    
+    def plotMeasures(self, path, title, xaxis, xlabel, limits, names, dim, outfile):
         fig = plt.figure()
         for name in names:
             with open(path+name+'.json') as file:
                 matrix = json.load(file)
-                plt.plot(np.array(matrix).mean(dim), label=name)
+                plt.plot(xaxis, np.array(matrix).mean(dim), label=name)
+                plt.axis(limits)
+                ax = plt.gca()
+                ax.set_autoscale_on(False)
+                plt.title(title)
+                plt.xlabel(xlabel)
+                plt.ylabel('eval(D)')
+                
         fig.patch.set_facecolor('white')
         plt.savefig(path+outfile, facecolor='white', edgecolor='none')
     
     def plotAllMeasures(self, measures, outfolder):
         for measure in measures:
-            self.plotMeasures(outfolder, [measure], 0, measure+'0.png')
-            self.plotMeasures(outfolder, [measure], 1, measure+'1.png')
+            self.plotMeasures(outfolder, '', [-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7], "number of segments "+r"$2^\rho$", [-5,7,0,12], [measure], 0, measure+'0.pdf')
+            self.plotMeasures(outfolder, '', [0,1,2,3,4,5,6,7,8,9], "segment duration "+r"$2^\sigma$", [0,9,1,9], [measure], 1, measure+'1.pdf')
     
     def plotDistanceDistributions(self, distfile, outfolder):
         with open(distfile) as file:

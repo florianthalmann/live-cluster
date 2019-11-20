@@ -22,17 +22,19 @@ class JamsFeatureReader():
         if len(featureMatrix) == len(self.getFeatureMatrix("match")):
             return np.array(featureMatrix)
     
-    def normalize(self, array):
-        max = array.max()
+    def normalize(self, matrix):
+        min = matrix.min()
+        matrix -= min
+        max = matrix.max()
         if max != 0:
-            array /= max
-        return array
+            matrix /= max
+        return matrix
     
     def getLabels(self):
         labels = []
         for filename in os.listdir(self.folder):
             if "json" in filename and "match" in filename:
-                labels.append(filename.split('_')[0])
+                labels.append(filename.replace('_','',1).split('_')[0].replace('10','1x').replace('00','x').replace('0','').replace('x','0'))
         return labels
     
     def getBTime(self, atime, times):

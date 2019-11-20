@@ -3,8 +3,8 @@ import scipy.io.wavfile as wf
 import numpy as np
 from feature_reader import JamsFeatureReader
 
-infolder = "audio/tuned/"
-outfolder = "audio/trimmed/"
+infolder = "audio/channels/"
+outfolder = "audio/trimmed2/"
 
 #returns the first time value larger or equal the given time
 def get_first_time_value(time, times):
@@ -16,7 +16,7 @@ def get_first_time_value(time, times):
 
 def trim_wavs(from_sec, to_sec):
     files = os.listdir(infolder)[1:]
-    times = JamsFeatureReader("features/tuned/").getFeatureMatrix("match")
+    times = JamsFeatureReader("features/channels/").getFeatureMatrix("match")
     
     for index in range(len(files)):
         current_file = files[index]
@@ -29,4 +29,4 @@ def trim_wavs(from_sec, to_sec):
         data = data[int(rate*current_from):int(rate*current_to)]
         wf.write(outfolder+current_file, rate, data)
 
-trim_wavs(330,405)
+trim_wavs(330,450)
